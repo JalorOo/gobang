@@ -1,12 +1,11 @@
 import 'dart:math';
 
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:gobang/flyweight/Chess.dart';
+import 'package:gobang/flyweight/ChessFlyweightFactory.dart';
 
-var baiZiBean;
-var heiZiBean;
-List<BaiZiBean> baiZiBeanList = []; //所有白子的坐标点集合
-List<HeiZiBean> heiZiBeanList = []; //所有黑子的坐标点集合
-var flag = true; //默认为白子先走
+import 'flyweight/Position.dart';
 
 ///简单的实现五子棋效果
 class GamePage extends StatefulWidget {
@@ -15,60 +14,135 @@ class GamePage extends StatefulWidget {
 }
 
 class GamePageState extends State<GamePage> {
+  Position? _position;
+
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisSize: MainAxisSize.max,
-          children: <Widget>[
-            Padding(
-              padding: EdgeInsets.only(bottom: 15.0),
-              child: CupertinoButton.filled(
-                  padding: EdgeInsets.all(0.0),
-                  child: Text("重置棋盘"),
-                  onPressed: () {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text("南瓜五子棋"),
+      ),
+      body: Center(
+        child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisSize: MainAxisSize.max,
+            children: <Widget>[
+              Padding(
+                padding: EdgeInsets.only(bottom: 15.0),
+                child: CupertinoButton.filled(
+                    padding: EdgeInsets.all(0.0),
+                    child: Text("重置棋盘"),
+                    onPressed: () {
+                      setState(() {
+                        _position = null;
+                        ChessPainter._positions = [];
+                        // blackChess = null;
+                      });
+                    }),
+              ),
+              GestureDetector(
+                  onTapDown: (topDownDetails) {
                     setState(() {
-                      baiZiBean = null;
-                      heiZiBean = null;
-                      baiZiBeanList.clear();
-                      heiZiBeanList.clear();
+                      var position = topDownDetails.localPosition;
+                      Chess chess;
+                      if (ChessPainter._state == 0) {
+                        chess =
+                            ChessFlyweightFactory.getInstance().getChess("white");
+                      } else {
+                        chess =
+                            ChessFlyweightFactory.getInstance().getChess("black");
+                      }
+                      _position = Position(position.dx, position.dy, chess);
                     });
-                  }),
-            ),
-            GestureDetector(
-                onTapDown: (topDownDetails) {
-                  setState(() {
-                    var position = topDownDetails.localPosition;
-                    if (flag) {
-                      baiZiBean = BaiZiBean(position.dx, position.dy);
-                    } else {
-                      heiZiBean = HeiZiBean(position.dx, position.dy);
-                    }
-                  });
-                },
-                child: CustomPaint(
-                  size: Size(300.0, 300.0),
-                  painter: WuZiQiPainter(),
-                ))
-          ]),
+                  },
+                  child: Stack(
+                    children: [
+                      CustomPaint(
+                        size: Size(300.0, 300.0),
+                        painter: CheckerBoardPainter(),
+                      ),
+                      CustomPaint(
+                        size: Size(300.0, 300.0),
+                        painter: ChessPainter(_position),
+                      )
+                    ],
+                  ))
+            ]),
+      ),
     );
   }
 }
 
-class WuZiQiPainter extends CustomPainter {
-  List<CrossOverBean> _crossOverBeanList = [];
+class ChessPainter extends CustomPainter {
+  static List<Position> _positions = [];
+  static int _state = 0;
+  final Position? _position;
+
+  ChessPainter(Position? position) : _position = position;
 
   @override
   void paint(Canvas canvas, Size size) {
-    // TODO: implement paint
-    _crossOverBeanList.clear();
-    canvas.drawColor(CupertinoColors.systemGrey, BlendMode.colorBurn);//重绘下整个界面的画布北京颜色
+    if (_position == null) {
+      return;
+    }
     double mWidth = size.width / 15;
     double mHeight = size.height / 15;
+    var mPaint = Paint();
+    //求两个点之间的距离,让棋子正确的显示在坐标轴上面
+    var dx = _position!.dx;
+    var dy = _position!.dy;
+    for (int i = 0; i < CheckerBoardPainter._crossOverBeanList.length; i++) {
+      var absX = (dx - CheckerBoardPainter._crossOverBeanList[i]._dx).abs(); //两个点的x轴距离
+      var absY = (dy - CheckerBoardPainter._crossOverBeanList[i]._dy).abs(); //两个点的y轴距离
+      var s = sqrt(absX * absX +
+          absY * absY); //利用直角三角形求斜边公式（a的平方 + b的平方 = c的平方）来计算出两点间的距离
+      if (s <= mWidth / 2 - 2) {
+        // 触摸点到棋盘坐标坐标点距离小于等于棋子半径，那么
+        //找到离触摸点最近的棋盘坐标点并记录保存下来
+        _position!.dx = CheckerBoardPainter._crossOverBeanList[i]._dx;
+        _position!.dy = CheckerBoardPainter._crossOverBeanList[i]._dy;
+        _positions.add(_position!);
+        _state = (_state + 1) % 2;
+        // flag = false; //白子下完了，该黑子下了
+        break;
+      }
+    }
+
+    //画子
+    mPaint..style = PaintingStyle.fill;
+    if (_positions.isNotEmpty) {
+      for (int i = 0; i < _positions.length; i++) {
+        mPaint..color = _positions[i].chess.color;
+        canvas.drawCircle(Offset(_positions[i].dx, _positions[i].dy),
+            min(mWidth / 2, mHeight / 2) - 2, mPaint);
+      }
+    }
+  }
+
+  //在实际场景中正确利用此回调可以避免重绘开销，本示例我们简单的返回true
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) {
+    // TODO: implement shouldRepaint
+    return true;
+  }
+}
+
+class CheckerBoardPainter extends CustomPainter {
+  static List<CrossOverBean> _crossOverBeanList = [];
+  static int _state = 0;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    double mWidth = size.width / 15;
+    double mHeight = size.height / 15;
+    var mPaint = Paint();
+
+    _crossOverBeanList.clear();
+    canvas.drawColor(
+        CupertinoColors.systemGrey, BlendMode.colorBurn); //重绘下整个界面的画布北京颜色
     //设置画笔，画棋盘背景
-    var mPaint = Paint()
+    mPaint
       ..isAntiAlias = true //抗锯齿
       ..style = PaintingStyle.fill //填充
       ..color = Color(0x77cdb175); //背景为纸黄色
@@ -99,78 +173,14 @@ class WuZiQiPainter extends CustomPainter {
         _crossOverBeanList.add(CrossOverBean(mWidth * j, mHeight * i));
       }
     }
-    //求两个点之间的距离,让棋子正确的显示在坐标轴上面
-    if(flag && baiZiBean != null){
-      //白子棋
-      var dx = baiZiBean._dx;
-      var dy = baiZiBean._dy;
-      for(int i=0; i<_crossOverBeanList.length; i++){
-        var absX = (dx - _crossOverBeanList[i]._dx).abs(); //两个点的x轴距离
-        var absY = (dy - _crossOverBeanList[i]._dy).abs(); //两个点的y轴距离
-        var s = sqrt(absX*absX + absY*absY); //利用直角三角形求斜边公式（a的平方 + b的平方 = c的平方）来计算出两点间的距离
-        if(s <= mWidth/2 - 2){ // 触摸点到棋盘坐标坐标点距离小于等于棋子半径，那么
-          //找到离触摸点最近的棋盘坐标点并记录保存下来
-          baiZiBeanList.add(BaiZiBean(_crossOverBeanList[i]._dx, _crossOverBeanList[i]._dy));
-          flag = false; //白子下完了，该黑子下了
-          break;
-        }
-      }
-    }else if(heiZiBean != null){
-      //黑子棋
-      var dx = heiZiBean._dx;
-      var dy = heiZiBean._dy;
-      for(int i=0; i<_crossOverBeanList.length; i++){
-        var absX = (dx - _crossOverBeanList[i]._dx).abs();
-        var absY = (dy - _crossOverBeanList[i]._dy).abs();
-        var s = sqrt(absX*absX + absY*absY);
-        if(s <= mWidth/2 - 2){
-          heiZiBeanList.add(HeiZiBean(_crossOverBeanList[i]._dx, _crossOverBeanList[i]._dy));
-          flag = true;
-          break;
-        }
-      }
-    }
-
-    //画白子
-    mPaint
-      ..style = PaintingStyle.fill
-      ..color = CupertinoColors.white;
-    if (baiZiBeanList.isNotEmpty) {
-      for (int i = 0; i < baiZiBeanList.length; i++) {
-        canvas.drawCircle(Offset(baiZiBeanList[i]._dx, baiZiBeanList[i]._dy),
-            min(mWidth / 2, mHeight / 2) - 2, mPaint);
-      }
-    }
-    //画黑子
-    mPaint..color = CupertinoColors.black;
-    if (heiZiBeanList.isNotEmpty) {
-      for (int i = 0; i < heiZiBeanList.length; i++) {
-        canvas.drawCircle(Offset(heiZiBeanList[i]._dx, heiZiBeanList[i]._dy),
-            min(mWidth / 2, mHeight / 2) - 2, mPaint);
-      }
-    }
   }
 
   //在实际场景中正确利用此回调可以避免重绘开销，本示例我们简单的返回true
   @override
   bool shouldRepaint(CustomPainter oldDelegate) {
     // TODO: implement shouldRepaint
-    return true;
+    return false;
   }
-}
-
-class BaiZiBean {
-  double _dx;
-  double _dy;
-
-  BaiZiBean(this._dx, this._dy);
-}
-
-class HeiZiBean {
-  double _dx;
-  double _dy;
-
-  HeiZiBean(this._dx, this._dy);
 }
 
 ///记录棋盘上横竖线的交叉点
