@@ -3,12 +3,14 @@ import 'dart:math';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:gobang/ai/Ai.dart';
+import 'package:gobang/factory/ThemeFactory.dart';
 import 'package:gobang/flyweight/Chess.dart';
 import 'package:gobang/flyweight/ChessFlyweightFactory.dart';
 import 'package:gobang/utils/TipsDialog.dart';
 
 import 'flyweight/Position.dart';
 
+var width = 0.0;
 ///简单的实现五子棋效果
 class GamePage extends StatefulWidget {
   @override
@@ -17,85 +19,94 @@ class GamePage extends StatefulWidget {
 
 class GamePageState extends State<GamePage> {
 
+  ThemeFactory? _themeFactory;
+
   @override
   void initState() {
+    _themeFactory = AiThemeFactory();
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
+    width = MediaQuery.of(context).size.width*0.8;
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: _themeFactory!.getTheme().getThemeColor(),
         title: Text("南瓜五子棋"),
       ),
-      body: Center(
-        child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisSize: MainAxisSize.max,
-            children: <Widget>[
-              Padding(
-                padding: EdgeInsets.only(bottom: 15.0),
-                child: CupertinoButton.filled(
-                    padding: EdgeInsets.all(0.0),
-                    child: Text("重置棋盘"),
-                    onPressed: () {
-                      setState(() {
-                        ChessPainter._position = null;
-                        ChessPainter._positions = [];
-                        Ai.getInstance().init();
-                        // blackChess = null;
-                      });
-                    }),
-              ),
-              Padding(
-                padding: EdgeInsets.only(bottom: 15.0),
-                child: CupertinoButton.filled(
-                    padding: EdgeInsets.all(0.0),
-                    child: Text("Ai下棋"),
-                    onPressed: () {
-                        turnAi();
-                        // blackChess = null;
-                    }),
-              ),
-              GestureDetector(
-                  onTapDown: (topDownDetails) {
-                    var position = topDownDetails.localPosition;
-                    Chess chess;
-                    if (ChessPainter._state == 0) {
-                      chess =
-                          ChessFlyweightFactory.getInstance().getChess("white");
-                    } else {
-                      chess =
-                          ChessFlyweightFactory.getInstance().getChess("black");
-                    }
-                    setState(() {
-                      ChessPainter._position = Position(position.dx, position.dy, chess);
-                    });
-                  },
-                  child: Stack(
-                    children: [
-                      CustomPaint(
-                        size: Size(300.0, 300.0),
-                        painter: CheckerBoardPainter(),
-                      ),
-                      CustomPaint(
-                        size: Size(300.0, 300.0),
-                        painter: ChessPainter(turnAi),
-                      )
-                    ],
-                  ))
-            ]),
+      body: ListView(
+        children: [
+          Center(
+            child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisSize: MainAxisSize.max,
+                children: <Widget>[
+                  Padding(
+                    padding: EdgeInsets.only(bottom: 15.0),
+                    child: CupertinoButton.filled(
+                        padding: EdgeInsets.all(0.0),
+                        child: Text("重置棋盘"),
+                        onPressed: () {
+                          setState(() {
+                            ChessPainter._position = null;
+                            ChessPainter._positions = [];
+                            Ai.getInstance().init();
+                            // blackChess = null;
+                          });
+                        }),
+                  ),
+                  Padding(
+                    padding: EdgeInsets.only(bottom: 15.0),
+                    child: CupertinoButton.filled(
+                        padding: EdgeInsets.all(0.0),
+                        child: Text("Ai下棋"),
+                        onPressed: () {
+                            turnAi();
+                            // blackChess = null;
+                        }),
+                  ),
+                  GestureDetector(
+                      onTapDown: (topDownDetails) {
+                        var position = topDownDetails.localPosition;
+                        Chess chess;
+                        if (ChessPainter._state == 0) {
+                          chess =
+                              ChessFlyweightFactory.getInstance().getChess("white");
+                        } else {
+                          chess =
+                              ChessFlyweightFactory.getInstance().getChess("black");
+                        }
+                        setState(() {
+                          ChessPainter._position = Position(position.dx, position.dy, chess);
+                        });
+                      },
+                      child: Stack(
+                        children: [
+                          CustomPaint(
+                            size: Size(width, width),
+                            painter: CheckerBoardPainter(),
+                          ),
+                          CustomPaint(
+                            size: Size(width, width),
+                            painter: ChessPainter(turnAi),
+                          )
+                        ],
+                      ))
+                ]),
+          ),
+        ],
       ),
     );
   }
 
   void turnAi() {
-    if(ChessPainter._position!.chess is WhiteChess && Ai.getInstance().isWin(ChessPainter._position!.dx~/(300/15), ChessPainter._position!.dy~/(300/15), 1)){
+    if(ChessPainter._position!.chess is WhiteChess && Ai.getInstance().isWin(ChessPainter._position!.dx~/(width/15), ChessPainter._position!.dy~/(width/15), 1)){
       TipsDialog.show(context, "恭喜", "您打败了决策树算法");
     }
     Ai ai = Ai.getInstance();
-    print("Owner:"+Ai.getInstance().isWin(ChessPainter._position!.dx~/(300/15), ChessPainter._position!.dy~/(300/15), 1).toString());
+    print("Owner:"+Ai.getInstance().isWin(ChessPainter._position!.dx~/(width/15), ChessPainter._position!.dy~/(width/15), 1).toString());
     ChessPainter._position = ai.searchPosition();
     Ai.getInstance().addChessman(ChessPainter._position!.dx.toInt(), ChessPainter._position!.dy.toInt(), -1);
     print("Ai:"+Ai.getInstance().isWin(ChessPainter._position!.dx.toInt(), ChessPainter._position!.dy.toInt(), -1).toString());
@@ -103,8 +114,8 @@ class GamePageState extends State<GamePage> {
       TipsDialog.show(context, "很遗憾", "决策树算法打败了您");
     }
     setState(() {
-      ChessPainter._position!.dx = ChessPainter._position!.dx*(300/15);
-      ChessPainter._position!.dy = ChessPainter._position!.dy*(300/15);
+      ChessPainter._position!.dx = ChessPainter._position!.dx*(width/15);
+      ChessPainter._position!.dy = ChessPainter._position!.dy*(width/15);
     });
   }
 }
@@ -142,7 +153,7 @@ class ChessPainter extends CustomPainter {
         _positions.add(_position!);
         add = true;
         if (_position!.chess is WhiteChess) {
-          Ai.getInstance().addChessman(_position!.dx~/(300/15), _position!.dy~/(300/15), 1);
+          Ai.getInstance().addChessman(_position!.dx~/(width/15), _position!.dy~/(width/15), 1);
         }
         // flag = false; //白子下完了，该黑子下了
         break;
