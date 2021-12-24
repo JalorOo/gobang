@@ -2,8 +2,10 @@ import 'dart:math';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:gobang/ai/Ai.dart';
 import 'package:gobang/flyweight/Chess.dart';
 import 'package:gobang/flyweight/ChessFlyweightFactory.dart';
+import 'package:gobang/utils/TipsDialog.dart';
 
 import 'flyweight/Position.dart';
 
@@ -14,7 +16,11 @@ class GamePage extends StatefulWidget {
 }
 
 class GamePageState extends State<GamePage> {
-  Position? _position;
+
+  @override
+  void initState() {
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -35,25 +41,36 @@ class GamePageState extends State<GamePage> {
                     child: Text("重置棋盘"),
                     onPressed: () {
                       setState(() {
-                        _position = null;
+                        ChessPainter._position = null;
                         ChessPainter._positions = [];
+                        Ai.getInstance().init();
                         // blackChess = null;
                       });
                     }),
               ),
+              Padding(
+                padding: EdgeInsets.only(bottom: 15.0),
+                child: CupertinoButton.filled(
+                    padding: EdgeInsets.all(0.0),
+                    child: Text("Ai下棋"),
+                    onPressed: () {
+                        turnAi();
+                        // blackChess = null;
+                    }),
+              ),
               GestureDetector(
                   onTapDown: (topDownDetails) {
+                    var position = topDownDetails.localPosition;
+                    Chess chess;
+                    if (ChessPainter._state == 0) {
+                      chess =
+                          ChessFlyweightFactory.getInstance().getChess("white");
+                    } else {
+                      chess =
+                          ChessFlyweightFactory.getInstance().getChess("black");
+                    }
                     setState(() {
-                      var position = topDownDetails.localPosition;
-                      Chess chess;
-                      if (ChessPainter._state == 0) {
-                        chess =
-                            ChessFlyweightFactory.getInstance().getChess("white");
-                      } else {
-                        chess =
-                            ChessFlyweightFactory.getInstance().getChess("black");
-                      }
-                      _position = Position(position.dx, position.dy, chess);
+                      ChessPainter._position = Position(position.dx, position.dy, chess);
                     });
                   },
                   child: Stack(
@@ -64,7 +81,7 @@ class GamePageState extends State<GamePage> {
                       ),
                       CustomPaint(
                         size: Size(300.0, 300.0),
-                        painter: ChessPainter(_position),
+                        painter: ChessPainter(turnAi),
                       )
                     ],
                   ))
@@ -72,20 +89,40 @@ class GamePageState extends State<GamePage> {
       ),
     );
   }
+
+  void turnAi() {
+    if(ChessPainter._position!.chess is WhiteChess && Ai.getInstance().isWin(ChessPainter._position!.dx~/(300/15), ChessPainter._position!.dy~/(300/15), 1)){
+      TipsDialog.show(context, "恭喜", "您打败了决策树算法");
+    }
+    Ai ai = Ai.getInstance();
+    print("Owner:"+Ai.getInstance().isWin(ChessPainter._position!.dx~/(300/15), ChessPainter._position!.dy~/(300/15), 1).toString());
+    ChessPainter._position = ai.searchPosition();
+    Ai.getInstance().addChessman(ChessPainter._position!.dx.toInt(), ChessPainter._position!.dy.toInt(), -1);
+    print("Ai:"+Ai.getInstance().isWin(ChessPainter._position!.dx.toInt(), ChessPainter._position!.dy.toInt(), -1).toString());
+    if(ChessPainter._position!.chess is BlackChess &&Ai.getInstance().isWin(ChessPainter._position!.dx.toInt(), ChessPainter._position!.dy.toInt(), -1)){
+      TipsDialog.show(context, "很遗憾", "决策树算法打败了您");
+    }
+    setState(() {
+      ChessPainter._position!.dx = ChessPainter._position!.dx*(300/15);
+      ChessPainter._position!.dy = ChessPainter._position!.dy*(300/15);
+    });
+  }
 }
 
 class ChessPainter extends CustomPainter {
   static List<Position> _positions = [];
   static int _state = 0;
-  final Position? _position;
+  static Position? _position;
+  final Function _function;
 
-  ChessPainter(Position? position) : _position = position;
+  ChessPainter(Function f):_function = f;
 
   @override
   void paint(Canvas canvas, Size size) {
     if (_position == null) {
       return;
     }
+    bool add = false;
     double mWidth = size.width / 15;
     double mHeight = size.height / 15;
     var mPaint = Paint();
@@ -103,7 +140,10 @@ class ChessPainter extends CustomPainter {
         _position!.dx = CheckerBoardPainter._crossOverBeanList[i]._dx;
         _position!.dy = CheckerBoardPainter._crossOverBeanList[i]._dy;
         _positions.add(_position!);
-        _state = (_state + 1) % 2;
+        add = true;
+        if (_position!.chess is WhiteChess) {
+          Ai.getInstance().addChessman(_position!.dx~/(300/15), _position!.dy~/(300/15), 1);
+        }
         // flag = false; //白子下完了，该黑子下了
         break;
       }
@@ -118,6 +158,11 @@ class ChessPainter extends CustomPainter {
             min(mWidth / 2, mHeight / 2) - 2, mPaint);
       }
     }
+    WidgetsBinding.instance!.addPostFrameCallback((_) {
+      if (add &&_position!.chess is WhiteChess) {
+        _function();
+      }
+    });
   }
 
   //在实际场景中正确利用此回调可以避免重绘开销，本示例我们简单的返回true
