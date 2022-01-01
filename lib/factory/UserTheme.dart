@@ -17,3 +17,10 @@ class BlueTheme extends t.Theme{
     return Colors.blue;
   }
 }
+
+class BlackTheme extends t.Theme{
+  @override
+  Color getThemeColor() {
+    return Colors.black;
+  }
+}

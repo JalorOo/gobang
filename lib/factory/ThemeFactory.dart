@@ -6,16 +6,23 @@ abstract class ThemeFactory{
   Theme getTheme();
 }
 
-class UserThemeFactory extends ThemeFactory{
+class YellowThemeFactory extends ThemeFactory{
   @override
   Theme getTheme() {
     return new YellowTheme();
   }
 }
 
-class AiThemeFactory extends ThemeFactory{
+class BlueThemeFactory extends ThemeFactory{
   @override
   Theme getTheme() {
     return new BlueTheme();
+  }
+}
+
+class BlackThemeFactory extends ThemeFactory{
+  @override
+  Theme getTheme() {
+    return new BlackTheme();
   }
 }

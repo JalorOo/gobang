@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:gobang/ai/Ai.dart';
 import 'package:gobang/bridge/ChessShape.dart';
 import 'package:gobang/factory/ThemeFactory.dart';
+import 'package:gobang/factory/UserTheme.dart';
 import 'package:gobang/flyweight/Chess.dart';
 import 'package:gobang/flyweight/ChessFlyweightFactory.dart';
 import 'package:gobang/memorandum/Originator.dart';
@@ -26,10 +27,17 @@ class GamePageState extends State<GamePage> {
   ThemeFactory? _themeFactory;
   GameViewModel _viewModel = GameViewModel.getInstance();
   Originator _originator = Originator.getInstance();
+  Icon lightOn = Icon(Icons.lightbulb,color: Colors.amberAccent);
+  Icon lightOff = Icon(Icons.lightbulb_outline_rounded);
+  Icon circle = Icon(Icons.circle_outlined);
+  Icon rect = Icon(Icons.crop_square);
+  Icon? currentLight,currentShape;
 
   @override
   void initState() {
-    _themeFactory = AiThemeFactory();
+    currentLight = lightOn;
+    _themeFactory = BlueThemeFactory();
+    currentShape = circle;
     super.initState();
   }
 
@@ -59,17 +67,22 @@ class GamePageState extends State<GamePage> {
               icon: Icon(Icons.undo)),
           IconButton(
               onPressed: () {
-                TipsDialog.showByChoose(context, "提示", "是否要投降并重新开局？","是","否",(value){
-                  if(value){
-                    setState(() {
-                      ChessPainter._position = null;
-                      _originator.clean();
-                      _viewModel.reset();
-                      Ai.getInstance().init();
-                    });
-                  }
-                  Navigator.pop(context);
-                });
+                if(_viewModel.surrender()) {
+                  TipsDialog.showByChoose(
+                      context, "提示", "是否要投降并重新开局？", "是", "否", (value) {
+                    if (value) {
+                      setState(() {
+                        ChessPainter._position = null;
+                        _originator.clean();
+                        _viewModel.reset();
+                        Ai.getInstance().init();
+                      });
+                    }
+                    Navigator.pop(context);
+                  });
+                }else{
+                  TipsDialog.show(context, "提示", "现阶段不能投降");
+                }
               },
               icon: Icon(Icons.sports_handball)),
           IconButton(
@@ -87,6 +100,30 @@ class GamePageState extends State<GamePage> {
                 });
               },
               icon: Icon(Icons.restart_alt)),
+          IconButton(
+              onPressed: () {
+                setState(() {
+                  if(_themeFactory is BlackThemeFactory){
+                    currentLight = lightOn;
+                    _themeFactory = BlueThemeFactory();
+                  }else{
+                    currentLight = lightOff;
+                    _themeFactory = BlackThemeFactory();
+                  }
+                });
+              },
+              icon: currentLight!),
+          IconButton(
+              onPressed: () {
+                setState(() {
+                  if(currentShape == circle){
+                    currentShape = rect;
+                  } else {
+                    currentShape = circle;
+                  }
+                });
+              },
+              icon: currentShape!),
         ],
       ),
       body: Container(
@@ -118,7 +155,7 @@ class GamePageState extends State<GamePage> {
                     GestureDetector(
                         onTapDown: (topDownDetails) {
                           var position = topDownDetails.localPosition;
-                          Chess chess = _viewModel.play();
+                          Chess chess = _viewModel.play(currentShape == circle);
                           setState(() {
                             ChessPainter._position =
                                 Position(position.dx, position.dy, chess);

@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:gobang/bridge/ChessShape.dart';
 import 'package:gobang/flyweight/Chess.dart';
 import 'package:gobang/flyweight/ChessFlyweightFactory.dart';
@@ -18,11 +19,14 @@ class GameViewModel {
 
   UserContext _userContext = UserContext();
 
-  Chess play() {
+  Chess play(bool current) {
     _userContext.play();
     Chess chess;
     /// 设置棋子外观
     ChessShape shape = RectShape();
+    if(current){
+      shape = CircleShape();
+    }
     chess = ChessFlyweightFactory.getInstance().getChess("white");
     chess.chessShape = shape;
     return chess;
@@ -44,5 +48,9 @@ class GameViewModel {
 
   void reset() {
     _userContext.reset();
+  }
+
+  bool surrender() {
+    return _userContext.surrender();
   }
 }
