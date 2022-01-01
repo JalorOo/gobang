@@ -38,83 +38,115 @@ class GamePageState extends State<GamePage> {
     width = MediaQuery.of(context).size.width * 0.8;
     return Scaffold(
       appBar: AppBar(
+        elevation: 0,
         backgroundColor: _themeFactory!.getTheme().getThemeColor(),
         title: Text("南瓜五子棋"),
         actions: [
           IconButton(
               onPressed: () {
-                if(_viewModel.undo()){
+                if (_viewModel.undo()) {
                   _originator.undo();
+                  Ai.getInstance().init();
+                  for (Position po in _originator.state) {
+                    Ai.getInstance().addChessman(po.dx ~/ (width / 15),
+                        po.dy ~/ (width / 15), po.chess is WhiteChess ? 1 : -1);
+                  }
                   setState(() {});
-                }else{
+                } else {
                   TipsDialog.show(context, "提示", "现阶段不能悔棋");
                 }
               },
-              icon: Icon(Icons.undo))
+              icon: Icon(Icons.undo)),
+          IconButton(
+              onPressed: () {
+                TipsDialog.showByChoose(context, "提示", "是否要投降并重新开局？","是","否",(value){
+                  if(value){
+                    setState(() {
+                      ChessPainter._position = null;
+                      _originator.clean();
+                      _viewModel.reset();
+                      Ai.getInstance().init();
+                    });
+                  }
+                  Navigator.pop(context);
+                });
+              },
+              icon: Icon(Icons.sports_handball)),
+          IconButton(
+              onPressed: () {
+                TipsDialog.showByChoose(context, "提示", "是否重新开局？","是","否",(value){
+                  if(value){
+                    setState(() {
+                      ChessPainter._position = null;
+                      _originator.clean();
+                      _viewModel.reset();
+                      Ai.getInstance().init();
+                    });
+                  }
+                  Navigator.pop(context);
+                });
+              },
+              icon: Icon(Icons.restart_alt)),
         ],
       ),
-      body: ListView(
-        children: [
-          Center(
-            child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                mainAxisSize: MainAxisSize.max,
-                children: <Widget>[
-                  Padding(
-                    padding: EdgeInsets.only(bottom: 15.0),
-                    child: CupertinoButton.filled(
-                        padding: EdgeInsets.all(0.0),
-                        child: Text("重置棋盘"),
-                        onPressed: () {
+      body: Container(
+        decoration: new BoxDecoration(
+            gradient: new LinearGradient(
+                colors: [
+                  _themeFactory!.getTheme().getThemeColor(),
+                  Colors.white,
+                ],
+                stops: [
+                  0.0,
+                  1
+                ],
+                begin: FractionalOffset.topCenter,
+                end: FractionalOffset.bottomCenter,
+                tileMode: TileMode.repeated)),
+        child: ListView(
+          children: [
+            Center(
+              child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.max,
+                  children: <Widget>[
+                    Padding (
+                      padding: EdgeInsets.only(top:14,bottom: 30),
+                      child: Text(_viewModel.state,style: TextStyle(color: Colors.white),),
+                    ),
+                    GestureDetector(
+                        onTapDown: (topDownDetails) {
+                          var position = topDownDetails.localPosition;
+                          Chess chess = _viewModel.play();
                           setState(() {
-                            ChessPainter._position = null;
-                            _originator.clean();
-                            Ai.getInstance().init();
-                            // blackChess = null;
+                            ChessPainter._position =
+                                Position(position.dx, position.dy, chess);
                           });
-                        }),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.only(bottom: 15.0),
-                    child: CupertinoButton.filled(
-                        padding: EdgeInsets.all(0.0),
-                        child: Text("Ai下棋"),
-                        onPressed: () {
-                          turnAi();
-                          // blackChess = null;
-                        }),
-                  ),
-                  GestureDetector(
-                      onTapDown: (topDownDetails) {
-                        var position = topDownDetails.localPosition;
-                        Chess chess = _viewModel.play();
-                        setState(() {
-                          ChessPainter._position =
-                              Position(position.dx, position.dy, chess);
-                        });
-                      },
-                      child: Stack(
-                        children: [
-                          CustomPaint(
-                            size: Size(width, width),
-                            painter: CheckerBoardPainter(),
-                          ),
-                          CustomPaint(
-                            size: Size(width, width),
-                            painter: ChessPainter(turnAi),
-                          )
-                        ],
-                      ))
-                ]),
-          ),
-        ],
+                        },
+                        child: Stack(
+                          children: [
+                            CustomPaint(
+                              size: Size(width, width),
+                              painter: CheckerBoardPainter(),
+                            ),
+                            CustomPaint(
+                              size: Size(width, width),
+                              painter: ChessPainter(turnAi),
+                            )
+                          ],
+                        ))
+                  ]),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   /// Ai 下棋
   void turnAi() {
+    // print("Ai下棋");
     if (ChessPainter._position!.chess is WhiteChess &&
         Ai.getInstance().isWin(ChessPainter._position!.dx ~/ (width / 15),
             ChessPainter._position!.dy ~/ (width / 15), 1)) {
@@ -227,8 +259,7 @@ class CheckerBoardPainter extends CustomPainter {
     var mPaint = Paint();
 
     _crossOverBeanList.clear();
-    canvas.drawColor(
-        CupertinoColors.systemGrey, BlendMode.colorBurn); //重绘下整个界面的画布北京颜色
+    //重绘下整个界面的画布北京颜色
     //设置画笔，画棋盘背景
     mPaint
       ..isAntiAlias = true //抗锯齿

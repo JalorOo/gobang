@@ -5,8 +5,8 @@ class CareTaker{
 
   void add(Memo state){
     mementoList.add(state);
-    if (mementoList.length>3) {
-      mementoList.removeAt(0);
+    if (mementoList.length > 10) {
+      mementoList.removeRange(0, 1);
     }
   }
 
@@ -15,6 +15,9 @@ class CareTaker{
   }
 
   Memo getLast(){
-    return mementoList.last;
+    Memo memo = mementoList[mementoList.length-3];
+    mementoList.removeLast();
+    mementoList.removeLast();
+    return memo;
   }
 }

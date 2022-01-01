@@ -2,7 +2,11 @@ import 'package:gobang/state/UserContext.dart';
 
 abstract class State {
   int _step = 0;
+
+  int get step => _step;
   int _rect = 0;
+
+  int get rect => _rect;
   UserContext _userContext;
 
   State(UserContext userContext):_userContext = userContext;
@@ -24,8 +28,6 @@ class StartState extends State {
 
   StartState(UserContext userContext) : super(userContext);
 
-
-
   // 悔棋只能悔棋三次
   @override
   bool regretChess(){
@@ -40,7 +42,7 @@ class StartState extends State {
   @override
   play() {
     super.play();
-    if(_step >= 10) {
+    if(_step >= 4) {
       _userContext.setState(MidState(_userContext).._step = _step.._rect = _rect);
     }
   }
@@ -51,12 +53,18 @@ class StartState extends State {
 class MidState extends State {
   MidState(UserContext userContext) : super(userContext);
 
+  @override
+  int get _rect{
+    return super._rect;
+  }
+
   // 悔棋只能悔棋三次
   @override
   bool regretChess(){
-    if(_rect > 3) {
+    _rect++;
+    if(_rect == 3) {
+      print('切换到白热化阶段');
       _userContext.setState(EndState(_userContext).._step = _step.._rect = _rect);
-      return false;
     }
     return true;
   }

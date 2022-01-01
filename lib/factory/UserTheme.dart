@@ -4,14 +4,14 @@ import 'package:flutter/material.dart';
 
 import 'Theme.dart' as t;
 
-class UserTheme extends t.Theme{
+class YellowTheme extends t.Theme{
   @override
   Color getThemeColor() {
-    return Colors.yellow;
+    return Colors.amberAccent;
   }
 }
 
-class AiTheme extends t.Theme{
+class BlueTheme extends t.Theme{
   @override
   Color getThemeColor() {
     return Colors.blue;

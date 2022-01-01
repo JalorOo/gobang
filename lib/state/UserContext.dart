@@ -4,6 +4,8 @@ class UserContext {
 
   late State _state;
 
+  State get state => _state;
+
   UserContext(){
     _state = StartState(this);
   }
@@ -24,5 +26,9 @@ class UserContext {
 
   setState(State state){
     _state = state;
+  }
+
+  void reset() {
+    _state = StartState(this);
   }
 }

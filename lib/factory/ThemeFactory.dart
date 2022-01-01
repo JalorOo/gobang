@@ -9,13 +9,13 @@ abstract class ThemeFactory{
 class UserThemeFactory extends ThemeFactory{
   @override
   Theme getTheme() {
-    return new UserTheme();
+    return new YellowTheme();
   }
 }
 
 class AiThemeFactory extends ThemeFactory{
   @override
   Theme getTheme() {
-    return new AiTheme();
+    return new BlueTheme();
   }
 }
