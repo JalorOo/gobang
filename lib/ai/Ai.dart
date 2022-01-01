@@ -4,6 +4,7 @@ import 'dart:core';
 
 import 'dart:core';
 
+import 'package:gobang/bridge/ChessShape.dart';
 import 'package:gobang/flyweight/ChessFlyweightFactory.dart';
 import 'package:gobang/flyweight/Position.dart';
 
@@ -310,7 +311,7 @@ class Ai{
     }
     print(maxScore);
 
-    if(goalX != -1 && goalY != -1){
+    if (goalX != -1 && goalY != -1) {
       return new Position(goalX.toDouble(), goalY.toDouble(), ChessFlyweightFactory.getInstance().getChess(""));
     }
 
