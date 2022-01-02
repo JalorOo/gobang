@@ -4,9 +4,9 @@ abstract class State {
   int _step = 0;
 
   int get step => _step;
-  int _rect = 0;
+  int _reg = 0;
 
-  int get rect => _rect;
+  int get reg => _reg;
   UserContext _userContext;
 
   State(UserContext userContext):_userContext = userContext;
@@ -43,7 +43,7 @@ class StartState extends State {
   play() {
     super.play();
     if(_step >= 4) {
-      _userContext.setState(MidState(_userContext).._step = _step.._rect = _rect);
+      _userContext.setState(MidState(_userContext).._step = _step.._reg = _reg);
     }
   }
 
@@ -54,17 +54,17 @@ class MidState extends State {
   MidState(UserContext userContext) : super(userContext);
 
   @override
-  int get _rect{
-    return super._rect;
+  int get _reg{
+    return super._reg;
   }
 
   // 悔棋只能悔棋三次
   @override
   bool regretChess(){
-    _rect++;
-    if(_rect == 3) {
+    _reg++;
+    if(_reg == 3) {
       print('切换到白热化阶段');
-      _userContext.setState(EndState(_userContext).._step = _step.._rect = _rect);
+      _userContext.setState(EndState(_userContext).._step = _step.._reg = _reg);
     }
     return true;
   }

@@ -4,15 +4,15 @@ import 'package:gobang/memorandum/CareTaker.dart';
 
 import 'Memo.dart';
 
-class Originator {
+class Checkerboard {
 
-  Originator._();
+  Checkerboard._();
 
-  static Originator? _originator;
+  static Checkerboard? _originator;
 
   static getInstance(){
     if(_originator == null){
-      _originator = Originator._();
+      _originator = Checkerboard._();
     }
     return _originator;
   }

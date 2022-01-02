@@ -5,14 +5,17 @@ import 'package:flutter/material.dart';
 import 'package:gobang/ai/Ai.dart';
 import 'package:gobang/bridge/ChessShape.dart';
 import 'package:gobang/factory/ThemeFactory.dart';
-import 'package:gobang/factory/UserTheme.dart';
+import 'package:gobang/factory/BlueTheme.dart';
 import 'package:gobang/flyweight/Chess.dart';
 import 'package:gobang/flyweight/ChessFlyweightFactory.dart';
-import 'package:gobang/memorandum/Originator.dart';
+import 'package:gobang/memorandum/Checkerboard.dart';
 import 'package:gobang/state/UserContext.dart';
 import 'package:gobang/utils/TipsDialog.dart';
 import 'package:gobang/viewModel/GameViewModel.dart';
 
+import 'bridge/CircleShape.dart';
+import 'factory/BlackThemeFactory.dart';
+import 'factory/BlueThemeFactory.dart';
 import 'flyweight/Position.dart';
 
 var width = 0.0;
@@ -26,12 +29,12 @@ class GamePage extends StatefulWidget {
 class GamePageState extends State<GamePage> {
   ThemeFactory? _themeFactory;
   GameViewModel _viewModel = GameViewModel.getInstance();
-  Originator _originator = Originator.getInstance();
-  Icon lightOn = Icon(Icons.lightbulb,color: Colors.amberAccent);
+  Checkerboard _originator = Checkerboard.getInstance();
+  Icon lightOn = Icon(Icons.lightbulb, color: Colors.amberAccent);
   Icon lightOff = Icon(Icons.lightbulb_outline_rounded);
   Icon circle = Icon(Icons.circle_outlined);
   Icon rect = Icon(Icons.crop_square);
-  Icon? currentLight,currentShape;
+  Icon? currentLight, currentShape;
 
   @override
   void initState() {
@@ -52,61 +55,11 @@ class GamePageState extends State<GamePage> {
         actions: [
           IconButton(
               onPressed: () {
-                if (_viewModel.undo()) {
-                  _originator.undo();
-                  Ai.getInstance().init();
-                  for (Position po in _originator.state) {
-                    Ai.getInstance().addChessman(po.dx ~/ (width / 15),
-                        po.dy ~/ (width / 15), po.chess is WhiteChess ? 1 : -1);
-                  }
-                  setState(() {});
-                } else {
-                  TipsDialog.show(context, "提示", "现阶段不能悔棋");
-                }
-              },
-              icon: Icon(Icons.undo)),
-          IconButton(
-              onPressed: () {
-                if(_viewModel.surrender()) {
-                  TipsDialog.showByChoose(
-                      context, "提示", "是否要投降并重新开局？", "是", "否", (value) {
-                    if (value) {
-                      setState(() {
-                        ChessPainter._position = null;
-                        _originator.clean();
-                        _viewModel.reset();
-                        Ai.getInstance().init();
-                      });
-                    }
-                    Navigator.pop(context);
-                  });
-                }else{
-                  TipsDialog.show(context, "提示", "现阶段不能投降");
-                }
-              },
-              icon: Icon(Icons.sports_handball)),
-          IconButton(
-              onPressed: () {
-                TipsDialog.showByChoose(context, "提示", "是否重新开局？","是","否",(value){
-                  if(value){
-                    setState(() {
-                      ChessPainter._position = null;
-                      _originator.clean();
-                      _viewModel.reset();
-                      Ai.getInstance().init();
-                    });
-                  }
-                  Navigator.pop(context);
-                });
-              },
-              icon: Icon(Icons.restart_alt)),
-          IconButton(
-              onPressed: () {
                 setState(() {
-                  if(_themeFactory is BlackThemeFactory){
+                  if (_themeFactory is BlackThemeFactory) {
                     currentLight = lightOn;
                     _themeFactory = BlueThemeFactory();
-                  }else{
+                  } else {
                     currentLight = lightOff;
                     _themeFactory = BlackThemeFactory();
                   }
@@ -116,7 +69,7 @@ class GamePageState extends State<GamePage> {
           IconButton(
               onPressed: () {
                 setState(() {
-                  if(currentShape == circle){
+                  if (currentShape == circle) {
                     currentShape = rect;
                   } else {
                     currentShape = circle;
@@ -130,13 +83,13 @@ class GamePageState extends State<GamePage> {
         decoration: new BoxDecoration(
             gradient: new LinearGradient(
                 colors: [
-                  _themeFactory!.getTheme().getThemeColor(),
-                  Colors.white,
-                ],
+              _themeFactory!.getTheme().getThemeColor(),
+              Colors.white,
+            ],
                 stops: [
-                  0.0,
-                  1
-                ],
+              0.0,
+              1
+            ],
                 begin: FractionalOffset.topCenter,
                 end: FractionalOffset.bottomCenter,
                 tileMode: TileMode.repeated)),
@@ -148,9 +101,12 @@ class GamePageState extends State<GamePage> {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   mainAxisSize: MainAxisSize.max,
                   children: <Widget>[
-                    Padding (
-                      padding: EdgeInsets.only(top:14,bottom: 30),
-                      child: Text(_viewModel.state,style: TextStyle(color: Colors.white),),
+                    Padding(
+                      padding: EdgeInsets.only(top: 14, bottom: 30),
+                      child: Text(
+                        _viewModel.state,
+                        style: TextStyle(color: Colors.white),
+                      ),
                     ),
                     GestureDetector(
                         onTapDown: (topDownDetails) {
@@ -172,7 +128,76 @@ class GamePageState extends State<GamePage> {
                               painter: ChessPainter(turnAi),
                             )
                           ],
-                        ))
+                        )),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 16.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          IconButton(
+                              onPressed: () {
+                                if (_viewModel.undo()) {
+                                  _originator.undo();
+                                  Ai.getInstance().init();
+                                  for (Position po in _originator.state) {
+                                    Ai.getInstance().addChessman(
+                                        po.dx ~/ (width / 15),
+                                        po.dy ~/ (width / 15),
+                                        po.chess is WhiteChess ? 1 : -1);
+                                  }
+                                  setState(() {});
+                                } else {
+                                  TipsDialog.show(context, "提示", "现阶段不能悔棋");
+                                }
+                              },
+                              icon: Icon(Icons.undo)),
+                          IconButton(
+                              onPressed: () {
+                                if (_viewModel.surrender()) {
+                                  TipsDialog.showByChoose(
+                                      context, "提示", "是否要投降并重新开局？", "是", "否",
+                                      (value) {
+                                    if (value) {
+                                      setState(() {
+                                        ChessPainter._position = null;
+                                        _originator.clean();
+                                        _viewModel.reset();
+                                        Ai.getInstance().init();
+                                      });
+                                    }
+                                    Navigator.pop(context);
+                                  });
+                                } else {
+                                  TipsDialog.show(context, "提示", "现阶段不能投降");
+                                }
+                              },
+                              icon: Icon(
+                                Icons.sports_handball,
+                                color: Colors.deepPurple,
+                              )),
+                          IconButton(
+                              onPressed: () {
+                                TipsDialog.showByChoose(
+                                    context, "提示", "是否重新开局？", "是", "否",
+                                    (value) {
+                                  if (value) {
+                                    setState(() {
+                                      ChessPainter._position = null;
+                                      _originator.clean();
+                                      _viewModel.reset();
+                                      Ai.getInstance().init();
+                                    });
+                                  }
+                                  Navigator.pop(context);
+                                });
+                              },
+                              icon: Icon(
+                                Icons.restart_alt,
+                                color: Colors.indigo,
+                              )),
+                        ],
+                      ),
+                    ),
                   ]),
             ),
           ],
@@ -213,7 +238,7 @@ class ChessPainter extends CustomPainter {
   static int _state = 0;
   static Position? _position;
   final Function _function;
-  Originator _originator = Originator.getInstance();
+  Checkerboard _originator = Checkerboard.getInstance();
 
   ChessPainter(Function f) : _function = f;
 

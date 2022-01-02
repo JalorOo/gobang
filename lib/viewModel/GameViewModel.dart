@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gobang/bridge/ChessShape.dart';
+import 'package:gobang/bridge/CircleShape.dart';
+import 'package:gobang/bridge/RectShape.dart';
 import 'package:gobang/flyweight/Chess.dart';
 import 'package:gobang/flyweight/ChessFlyweightFactory.dart';
 import 'package:gobang/state/State.dart';
@@ -40,7 +42,7 @@ class GameViewModel {
     if(_userContext.state is StartState){
       return "热身阶段,不能悔棋，不能投降";
     } else if(_userContext.state is MidState) {
-      return "入神阶段,可以悔棋且剩余${3 - _userContext.state.rect}次，可以投降";
+      return "入神阶段,可以悔棋且剩余${3 - _userContext.state.reg}次，可以投降";
     } else if(_userContext.state is EndState) {
       return "白热化阶段,悔棋次数已用完，但可以投降";
     }

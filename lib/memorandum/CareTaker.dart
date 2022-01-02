@@ -3,8 +3,8 @@ import 'Memo.dart';
 class CareTaker{
   List<Memo> mementoList = [];
 
-  void add(Memo state){
-    mementoList.add(state);
+  void add(Memo memo) {
+    mementoList.add(memo);
     if (mementoList.length > 10) {
       mementoList.removeRange(0, 1);
     }
@@ -14,7 +14,7 @@ class CareTaker{
     return mementoList[index];
   }
 
-  Memo getLast(){
+  Memo getLast() {
     Memo memo = mementoList[mementoList.length-3];
     mementoList.removeLast();
     mementoList.removeLast();
