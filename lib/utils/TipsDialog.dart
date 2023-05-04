@@ -16,7 +16,7 @@ class TipsDialog{
             ),
           ),
           actions: <Widget>[
-            new FlatButton(
+            new TextButton(
               child: new Text('确定'),
               onPressed: () {
                 Navigator.of(context).pop();
@@ -62,13 +62,13 @@ class TipsDialog{
             ),
           ),
           actions: <Widget>[
-            new FlatButton(
+            new TextButton(
               child: new Text(no),
               onPressed: () {
                 f(false);
               },
             ),
-            new FlatButton(
+            new TextButton(
               child: new Text(yes),
               onPressed: () {
                 f(true);

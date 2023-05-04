@@ -93,114 +93,110 @@ class GamePageState extends State<GamePage> {
                 begin: FractionalOffset.topCenter,
                 end: FractionalOffset.bottomCenter,
                 tileMode: TileMode.repeated)),
-        child: ListView(
-          children: [
-            Center(
-              child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.max,
-                  children: <Widget>[
-                    Padding(
-                      padding: EdgeInsets.only(top: 14, bottom: 30),
-                      child: Text(
-                        _viewModel.state,
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                    GestureDetector(
-                        onTapDown: (topDownDetails) {
-                          var position = topDownDetails.localPosition;
-                          Chess chess = _viewModel.play(currentShape == circle);
-                          setState(() {
-                            ChessPainter._position =
-                                Position(position.dx, position.dy, chess);
-                          });
-                        },
-                        child: Stack(
-                          children: [
-                            CustomPaint(
-                              size: Size(width, width),
-                              painter: CheckerBoardPainter(),
-                            ),
-                            CustomPaint(
-                              size: Size(width, width),
-                              painter: ChessPainter(turnAi),
-                            )
-                          ],
-                        )),
-                    Padding(
-                      padding: const EdgeInsets.only(top: 16.0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          IconButton(
-                              onPressed: () {
-                                if (_viewModel.undo()) {
-                                  _originator.undo();
-                                  Ai.getInstance().init();
-                                  for (Position po in _originator.state) {
-                                    Ai.getInstance().addChessman(
-                                        po.dx ~/ (width / 15),
-                                        po.dy ~/ (width / 15),
-                                        po.chess is WhiteChess ? 1 : -1);
-                                  }
-                                  setState(() {});
-                                } else {
-                                  TipsDialog.show(context, "提示", "现阶段不能悔棋");
-                                }
-                              },
-                              icon: Icon(Icons.undo)),
-                          IconButton(
-                              onPressed: () {
-                                if (_viewModel.surrender()) {
-                                  TipsDialog.showByChoose(
-                                      context, "提示", "是否要投降并重新开局？", "是", "否",
-                                      (value) {
-                                    if (value) {
-                                      setState(() {
-                                        ChessPainter._position = null;
-                                        _originator.clean();
-                                        _viewModel.reset();
-                                        Ai.getInstance().init();
-                                      });
-                                    }
-                                    Navigator.pop(context);
+        child: Center(
+          child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisSize: MainAxisSize.max,
+              children: <Widget>[
+                Padding(
+                  padding: EdgeInsets.only(top: 14, bottom: 30),
+                  child: Text(
+                    _viewModel.state,
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
+                GestureDetector(
+                    onTapDown: (topDownDetails) {
+                      var position = topDownDetails.localPosition;
+                      Chess chess = _viewModel.play(currentShape == circle);
+                      setState(() {
+                        ChessPainter._position =
+                            Position(position.dx, position.dy, chess);
+                      });
+                    },
+                    child: Stack(
+                      children: [
+                        CustomPaint(
+                          size: Size(width, width),
+                          painter: CheckerBoardPainter(),
+                        ),
+                        CustomPaint(
+                          size: Size(width, width),
+                          painter: ChessPainter(turnAi),
+                        )
+                      ],
+                    )),
+                Padding(
+                  padding: const EdgeInsets.only(top: 16.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      IconButton(
+                          onPressed: () {
+                            if (_viewModel.undo()) {
+                              _originator.undo();
+                              Ai.getInstance().init();
+                              for (Position po in _originator.state) {
+                                Ai.getInstance().addChessman(
+                                    po.dx ~/ (width / 15),
+                                    po.dy ~/ (width / 15),
+                                    po.chess is WhiteChess ? 1 : -1);
+                              }
+                              setState(() {});
+                            } else {
+                              TipsDialog.show(context, "提示", "现阶段不能悔棋");
+                            }
+                          },
+                          icon: Icon(Icons.undo)),
+                      IconButton(
+                          onPressed: () {
+                            if (_viewModel.surrender()) {
+                              TipsDialog.showByChoose(
+                                  context, "提示", "是否要投降并重新开局？", "是", "否",
+                                  (value) {
+                                if (value) {
+                                  setState(() {
+                                    ChessPainter._position = null;
+                                    _originator.clean();
+                                    _viewModel.reset();
+                                    Ai.getInstance().init();
                                   });
-                                } else {
-                                  TipsDialog.show(context, "提示", "现阶段不能投降");
                                 }
-                              },
-                              icon: Icon(
-                                Icons.sports_handball,
-                                color: Colors.deepPurple,
-                              )),
-                          IconButton(
-                              onPressed: () {
-                                TipsDialog.showByChoose(
-                                    context, "提示", "是否重新开局？", "是", "否",
-                                    (value) {
-                                  if (value) {
-                                    setState(() {
-                                      ChessPainter._position = null;
-                                      _originator.clean();
-                                      _viewModel.reset();
-                                      Ai.getInstance().init();
-                                    });
-                                  }
-                                  Navigator.pop(context);
+                                Navigator.pop(context);
+                              });
+                            } else {
+                              TipsDialog.show(context, "提示", "现阶段不能投降");
+                            }
+                          },
+                          icon: Icon(
+                            Icons.sports_handball,
+                            color: Colors.deepPurple,
+                          )),
+                      IconButton(
+                          onPressed: () {
+                            TipsDialog.showByChoose(
+                                context, "提示", "是否重新开局？", "是", "否",
+                                (value) {
+                              if (value) {
+                                setState(() {
+                                  ChessPainter._position = null;
+                                  _originator.clean();
+                                  _viewModel.reset();
+                                  Ai.getInstance().init();
                                 });
-                              },
-                              icon: Icon(
-                                Icons.restart_alt,
-                                color: Colors.indigo,
-                              )),
-                        ],
-                      ),
-                    ),
-                  ]),
-            ),
-          ],
+                              }
+                              Navigator.pop(context);
+                            });
+                          },
+                          icon: Icon(
+                            Icons.restart_alt,
+                            color: Colors.indigo,
+                          )),
+                    ],
+                  ),
+                ),
+              ]),
         ),
       ),
     );
